@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "builds": [
+    { "src": "api/oqu.js", "use": "@vercel/node" },
+    { "src": "public/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.+)", "dest": "/api/oqu.js?__oqu_endpoint=$1" },
+    { "src": "/(?:planner)?", "dest": "/public/planner.html" },
+    { "src": "/(.+)", "dest": "/public/$1" }
+  ]
+}
