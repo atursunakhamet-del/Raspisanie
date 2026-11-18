@@ -1,0 +1,13 @@
+import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
+export const users = sqliteTable('users', {
+ id:text('id').primaryKey(), login:text('login').notNull().unique(), name:text('name').notNull(), role:text('role').notNull(), groupId:text('group_id'), teacherId:text('teacher_id'), password:text('password').notNull(), settings:text('settings').notNull().default('{}'), createdAt:integer('created_at').notNull()
+},t=>[uniqueIndex('one_school_admin').on(t.role).where(sql`role = 'admin'`),uniqueIndex('one_teacher_account').on(t.teacherId)]);
+import { sql } from 'drizzle-orm';
+export const sessions=sqliteTable('sessions',{hash:text('hash').primaryKey(),userId:text('user_id').notNull().references(()=>users.id,{onDelete:'cascade'}),expiresAt:integer('expires_at').notNull()},t=>[index('sessions_user').on(t.userId)]);
+export const schoolState=sqliteTable('school_state',{id:integer('id').primaryKey(),json:text('json').notNull(),revision:integer('revision').notNull().default(0)});
+export const completions=sqliteTable('completions',{id:text('id').primaryKey(),userId:text('user_id').notNull().references(()=>users.id,{onDelete:'cascade'}),taskId:text('task_id').notNull()},t=>[uniqueIndex('completion_unique').on(t.userId,t.taskId)]);
+export const messages=sqliteTable('messages',{id:text('id').primaryKey(),senderId:text('sender_id').notNull().references(()=>users.id),recipientId:text('recipient_id').notNull().references(()=>users.id),body:text('body').notNull(),createdAt:integer('created_at').notNull(),readAt:integer('read_at')},t=>[index('message_inbox').on(t.recipientId,t.createdAt),index('message_thread').on(t.senderId,t.recipientId,t.createdAt)]);
+export const notifications=sqliteTable('notifications',{id:text('id').primaryKey(),userId:text('user_id').notNull().references(()=>users.id,{onDelete:'cascade'}),kind:text('kind').notNull(),title:text('title').notNull(),body:text('body').notNull(),peerId:text('peer_id'),createdAt:integer('created_at').notNull(),readAt:integer('read_at')},t=>[index('notification_inbox').on(t.userId,t.createdAt)]);
+export const invitations=sqliteTable('invitations',{hash:text('hash').primaryKey(),teacherId:text('teacher_id').notNull(),createdBy:text('created_by').notNull().references(()=>users.id),usedBy:text('used_by'),expiresAt:integer('expires_at').notNull()});
+export const limits=sqliteTable('request_limits',{key:text('key').primaryKey(),count:integer('count').notNull(),expiresAt:integer('expires_at').notNull()});
+export const dataImports=sqliteTable('data_imports',{id:text('id').primaryKey(),backupJson:text('backup_json').notNull(),backupRevision:integer('backup_revision').notNull(),appliedAt:integer('applied_at').notNull()});

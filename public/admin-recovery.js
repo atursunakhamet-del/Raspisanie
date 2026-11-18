@@ -1,0 +1,13 @@
+'use strict';
+(()=>{
+ let token=new URLSearchParams(location.hash.slice(1)).get('token')||'';
+ history.replaceState(null,'',location.pathname);
+ const el=id=>document.getElementById(id),form=el('recoveryForm');
+ async function request(path,payload){const response=await fetch('/api/admin-recovery/'+path,{method:'POST',credentials:'omit',referrerPolicy:'no-referrer',headers:{'content-type':'application/json','x-oqu-request':'1'},body:JSON.stringify(payload)});let result;try{result=await response.json();}catch{throw Error('Серверге қосылу мүмкін емес. Кейінірек қайталаңыз.');}if(!response.ok){const e=Error(result.error||'Сұрау орындалмады.');e.field=result.field;e.status=response.status;throw e;}return result;}
+ function error(id,message){el(id+'Error').textContent=message;el(id).setAttribute('aria-invalid',String(!!message));}
+ function validate(){const next=el('next').value,repeat=el('repeat').value;const a=next.length<10?'Кемінде 10 таңба енгізіңіз.':next.length>128?'128 таңбадан аспауы керек.':'';const b=!repeat?'Құпиясөзді қайталаңыз.':next!==repeat?'Құпиясөздер сәйкес емес.':'';error('next',a);error('repeat',b);return !(a||b);}
+ for(const button of document.querySelectorAll('.eye'))button.onclick=()=>{const field=el(button.dataset.for),show=field.type==='password';field.type=show?'text':'password';button.setAttribute('aria-pressed',String(show));button.setAttribute('aria-label',show?'Құпиясөзді жасыру':'Құпиясөзді көрсету');field.focus();};
+ for(const field of [el('next'),el('repeat')])field.addEventListener('input',()=>{if(el('nextError').textContent||el('repeatError').textContent)validate();});
+ form.onsubmit=async event=>{event.preventDefault();el('status').textContent='';if(!validate())return;el('submit').disabled=true;try{const result=await request('reset',{token,next:el('next').value});token='';form.reset();form.hidden=true;el('intro').textContent='Құпиясөз жаңартылды. Жаңа құпиясөзбен кіріңіз.';el('account').textContent='Сіздің логиніңіз: '+result.login;el('loginLink').hidden=false;}catch(e){if(e.field==='next')error('next',e.message);else el('status').textContent=e.message;if(e.status===410){form.reset();form.hidden=true;token='';el('loginLink').hidden=false;}}finally{el('submit').disabled=false;}};
+ (async()=>{try{if(!/^[a-f0-9]{64}$/.test(token))throw Error('Жеке қалпына келтіру сілтемесін ашыңыз.');const result=await request('info',{token});el('intro').textContent='Жаңа құпиясөз ойлап тауып, екі өріске бірдей енгізіңіз.';el('account').textContent='Сіздің логиніңіз: '+result.login;el('account').hidden=false;form.hidden=false;}catch(e){el('intro').textContent=e.message;el('loginLink').hidden=false;token='';}})();
+})();

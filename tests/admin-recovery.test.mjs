@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+import {localDatabase} from '../server/local-db.js';
+import {handleApi,passwordHash} from '../server/api.js';
+const DB=localDatabase(':memory:',fileURLToPath(new URL('../drizzle/',import.meta.url)));
+const secret='recovery-test-only-secret-never-deployed-123456789',token='a'.repeat(64),digest=s=>createHash('sha256').update(s).digest('hex');
+const oldPassword='OldTestPassword123!',nextPassword='NewTestPassword456!';
+const oldHash=await passwordHash(oldPassword,secret);
+await DB.prepare('INSERT INTO users (id,login,name,role,password,created_at) VALUES (?,?,?,?,?,?)').bind('owner','t.abdulaziz','Test owner','admin',oldHash,Date.now()).run();
+await DB.prepare('INSERT INTO school_state (id,json,revision) VALUES (1,?,19)').bind('{"untouched":true}').run();
+const env={DB,AUTH_SECRET:secret,DISABLE_SOURCE_IMPORT:true,ADMIN_RECOVERY_TOKEN_HASH:digest(token),ADMIN_RECOVERY_USER_ID:'owner',ADMIN_RECOVERY_PASSWORD_HASH:oldHash,ADMIN_RECOVERY_EXPIRES_AT:String(Date.now()+86400000)};
+let passed=0,seq=0;function check(label,value){assert.ok(value,label);console.log('PASS',label);passed++;}
+async function call(path,payload,overrides={},origin='https://oqu.test',ip){const response=await handleApi(new Request('https://oqu.test/api'+path,{method:'POST',headers:{'content-type':'application/json','x-oqu-request':'1',origin,'cf-connecting-ip':ip||'qa-'+(++seq)},body:JSON.stringify(payload)}),{...env,...overrides});return {status:response.status,...await response.json()};}
+check('Recovery is disabled without owner-issued configuration',(await call('/admin-recovery/info',{token},{ADMIN_RECOVERY_TOKEN_HASH:''})).status===410);
+const invalid=await call('/admin-recovery/info',{token:'b'.repeat(64)});check('Wrong token exposes no administrator identity',invalid.status===410&&!invalid.login);
+check('Malformed token is rejected',(await call('/admin-recovery/info',{token:'abc'})).status===410);
+check('Expired link is rejected',(await call('/admin-recovery/info',{token},{ADMIN_RECOVERY_EXPIRES_AT:String(Date.now()-1)})).status===410);
+check('Cross-origin recovery is rejected',(await call('/admin-recovery/info',{token},{},'https://attacker.test')).status===403);
+const info=await call('/admin-recovery/info',{token});check('Valid link reveals only administrator name and login',info.status===200&&info.login==='t.abdulaziz'&&!info.password);
+check('Viewing the link does not consume it',(await call('/admin-recovery/info',{token})).status===200);
+check('Weak new password is rejected',(await call('/admin-recovery/reset',{token,next:'short'})).field==='next');
+await DB.prepare('INSERT INTO sessions (hash,user_id,expires_at) VALUES (?,?,?)').bind('old-session','owner',Date.now()+86400000).run();
+check('Valid link changes the password',(await call('/admin-recovery/reset',{token,next:nextPassword})).ok===true);
+check('All administrator sessions are revoked',(await DB.prepare('SELECT count(*) AS n FROM sessions WHERE user_id=?').bind('owner').first()).n===0);
+check('Used recovery link cannot be opened again',(await call('/admin-recovery/info',{token})).status===410);
+check('Used recovery link cannot reset password twice',(await call('/admin-recovery/reset',{token,next:'ThirdTestPassword789!'})).status===410);
+check('Old password no longer authenticates',(await call('/login',{login:'t.abdulaziz',password:oldPassword})).status===401);
+check('New password authenticates the same administrator',(await call('/login',{login:'t.abdulaziz',password:nextPassword})).user?.id==='owner');
+const state=await DB.prepare('SELECT json,revision FROM school_state WHERE id=1').first();check('Timetable state and revision remain unchanged',state.json==='{"untouched":true}'&&state.revision===19);
+check('Password reset is recorded in administrator notifications',(await DB.prepare("SELECT count(*) AS n FROM notifications WHERE user_id='owner' AND kind='account'").first()).n===1);
+for(let n=0;n<10;n++)await call('/admin-recovery/info',{token:'b'.repeat(64)},{},'https://oqu.test','same-ip');
+check('Repeated recovery attempts are rate limited',(await call('/admin-recovery/info',{token},{},'https://oqu.test','same-ip')).status===429);
+console.log(`${passed} administrator recovery checks passed`);

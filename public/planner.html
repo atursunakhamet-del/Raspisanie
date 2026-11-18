@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="kk" class="auth-pending">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#153e45">
+<title>Oqu — Сабақ кестесі</title>
+<meta name="description" content="Сабақ кестесі, үй тапсырмалары және оқушыға арналған еске салғыштар.">
+<meta name="application-name" content="Oqu">
+<meta name="apple-mobile-web-app-title" content="Oqu">
+<meta property="og:title" content="Oqu — Сабақ кестесі">
+<meta property="og:description" content="Сабақ кестесі, үй тапсырмалары және еске салғыштар.">
+<meta property="og:type" content="website">
+<link rel="icon" href="favicon.ico?v=3" sizes="any">
+<link rel="icon" href="favicon.svg?v=3" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png?v=3" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=3" sizes="180x180">
+<link rel="manifest" href="site.webmanifest">
+<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="account.css">
+</head>
+<body>
+<aside class="sidebar">
+<a class="brand" href="#" aria-label="Oqu басты бет"><span class="brand-icon">o</span><span>oqu<span class="brand-dot">.</span><small>NARXOZ COLLEGE</small></span></a>
+<div class="nav-label">ОҚУ КЕҢІСТІГІ</div><nav id="nav" aria-label="Негізгі мәзір"></nav>
+<div class="sidebar-bottom"><strong>Күніңді сен жоспарла.</strong><p>Сабақ, тапсырма, уақыт —<br>бәрі бір жерде.</p></div>
+</aside>
+<main>
+<header class="topbar"><div><span class="muted">Менің кеңістігім</span><span class="slash">/</span><strong id="breadcrumb">Шолу</strong></div><div class="header-right"><span id="todayDate"></span><button class="icon-btn" id="bell" aria-label="Еске салғыштарды ашу"></button><span class="avatar">ОҚ</span></div></header>
+<div class="page">
+<section class="intro"><div><div class="eyebrow">ОҚУЫҢДЫ РЕТТЕ. УАҚЫТЫҢДЫ БАҒАЛА.</div><h1 id="title">Барлығы өз уақытында<span>.</span></h1><p id="subtitle">Бүгінгі жоспар — ертеңгі сенімді қадам.</p></div><button class="primary" id="add">+ Сабақ қосу</button></section>
+<div id="demoBanner" class="demo-banner" hidden><span>✦ Үлгі деректер · Жұмысын байқап көріңіз немесе өз кестеңізді бастаңыз.</span><button id="clearDemo">Өз кестемді бастау →</button></div>
+<div id="overview"></div>
+<section class="workspace" id="workspace"><div class="section-head"><div><div class="eyebrow">АПТАЛЫҚ ЖОСПАР</div><h2 id="sectionTitle">Сабақ кестесі</h2></div><div class="week-nav"><button id="prevWeek" class="icon-btn" aria-label="Алдыңғы апта">‹</button><strong id="weekLabel"></strong><button id="nextWeek" class="icon-btn" aria-label="Келесі апта">›</button><button id="thisWeek" class="text-btn">Бүгін</button></div></div><div class="toolbar"><div id="controls"></div><div class="tools"><button id="calendar">Күнтізбеге қосу</button><button id="export" title="JSON сақтық көшірмесі">Көшірме ↓</button><button id="import">Ашу ↑</button><button id="print">Басып шығару</button><input id="file" type="file" accept="application/json,.json" hidden></div></div><div id="content"></div></section>
+<footer><span><span class="status-dot"></span> <span id="saveStatus">Деректер осы браузерде сақталады</span></span><span>Oqu · Оқу жобасы · 2026</span></footer>
+</div></main>
+<dialog id="dialog"><form id="form"><div class="dialoghead"><div><div class="eyebrow">МЕНІҢ ЖОСПАРЫМ</div><h2 id="dialogtitle">Сабақ қосу</h2></div><button type="button" id="close" class="icon-btn" aria-label="Жабу">×</button></div><div id="fields" class="fields"></div><p id="error" role="alert"></p><div class="actions"><button type="button" id="remove" class="danger" hidden>Жою</button><div class="spacer"></div><button type="button" id="cancel">Болдырмау</button><button type="submit" class="primary">Сақтау</button></div></form></dialog>
+<div id="toast" role="status" hidden></div>
+<script src="account.js"></script>
+</body></html>
